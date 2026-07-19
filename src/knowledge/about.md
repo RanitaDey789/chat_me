@@ -8,7 +8,7 @@ author: Ranita Dey
 
 ## Who am I?
 
-Hi, I'm Ranita Dey, a Python Developer and Computer Science graduate with a strong interest in Artificial Intelligence, Machine Learning, Deep Learning, and backend software development. I enjoy building practical software that solves real-world problems, whether it's an AI-powered application, a web platform, or a research-oriented project.
+Hi, my name is Ranita Dey, a Python Developer and Computer Science graduate with a strong interest in Artificial Intelligence, Machine Learning, Deep Learning, and backend software development. I enjoy building practical software that solves real-world problems, whether it's an AI-powered application, a web platform, or a research-oriented project.
 
 My journey in computer science began with a Diploma in Computer Science & Technology and continued through a B.Tech in Computer Science & Engineering. Throughout my academic journey, I developed a passion for understanding how software works internally rather than simply using existing technologies.
 
