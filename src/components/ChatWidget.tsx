@@ -42,7 +42,7 @@ interface ChatWidgetProps {
 
 // ─── Floating widget ───────────────────────────────────────────────────────
 
-export function ChatWidget({ ownerName = "me", apiBase = "" }: ChatWidgetProps) {
+export function ChatWidget({ ownerName = "Ranita Dey", apiBase = "" }: ChatWidgetProps) {
   const [open, setOpen] = useState(false);
   const [warm, setWarm] = useState(false);
   const [unread, setUnread] = useState(0);

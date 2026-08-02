@@ -94,7 +94,7 @@ export default function PortfolioPage() {
         Drop it at the very end of your root layout (or on every page
         where you want the chat to be available).
       */}
-      <ChatWidget ownerName="me" />
+      <ChatWidget ownerName="Ranita Dey" />
     </div>
   );
 }

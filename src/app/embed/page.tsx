@@ -14,7 +14,7 @@ import { ChatWindow } from "@/components/ChatWidget";
 export default function EmbedPage() {
   return (
     <main className="h-screen w-screen bg-[var(--color-bg)]">
-      <ChatWindow ownerName="me" apiBase="" />
+      <ChatWindow ownerName="Ranita Dey" apiBase="" />
     </main>
   );
 }

@@ -1,6 +1,9 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "portfolio-rag-chatbot",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "tsx scripts/build-embeddings.ts && next build",

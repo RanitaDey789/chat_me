@@ -1,0 +1,5 @@
+{
+  "name": "Portfolio RAG Chatbot",
+  "description": "A production-ready RAG chatbot for portfolio integration with support for Render deployment and iframe/widget embedding",
+  "requestFramePermissions": []
+}

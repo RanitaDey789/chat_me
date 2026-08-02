@@ -1,96 +1,178 @@
 # 🧠 Portfolio RAG Chatbot
 
-A production-ready, free-tier RAG chatbot that answers questions about your work, projects, and engineering decisions — grounded entirely in your personal knowledge base.
+A production-ready, retrieval-augmented generation (RAG) chatbot that answers questions about your work, projects, background, and engineering decisions — grounded entirely in your personal knowledge base (`src/knowledge/`).
 
-[**→ Read the integration guide**](./INTEGRATION.md) for how to embed this in your existing portfolio.
+Designed for seamless deployment on **Render** and embedding into your live portfolio at [https://ranitadey.vercel.app/](https://ranitadey.vercel.app/).
 
-## What's inside
+---
 
-```
-src/
-├── app/
-│   ├── page.tsx                  ← mock portfolio demonstrating the widget
-│   ├── globals.css               ← design system
-│   └── api/
-│       ├── chat/route.ts         ← streaming RAG endpoint (SSE)
-│       └── knowledge/route.ts    ← live KB stats
-├── components/
-│   ├── ChatWidget.tsx            ← THE drop-in widget (floating button + modal)
-│   ├── ChatApp.tsx               ← full-page variant (not used in widget mode)
-│   └── ...
-├── lib/                          ← the RAG pipeline
-│   ├── knowledge.ts              ← markdown loader + semantic chunker
-│   ├── embeddings.ts             ← local BGE-small via ONNX (free, no API)
-│   ├── vector-store.ts           ← in-memory cosine similarity
-│   ├── prompts.ts                ← system + retrieval prompts
-│   └── llm.ts                    ← provider abstraction (Groq/OR/OAI)
-└── knowledge/                    ← your personal knowledge base
-    ├── about.md
-    ├── skills.md
-    ├── projects/*.md
-    ├── internships.md
-    ├── publications.md
-    ├── certifications.md
-    ├── leadership.md
-    ├── hobbies.md
-    ├── career.md
-    └── faq.md
-```
-
-## Quick start
+## 🚀 Quick Start (Local Development)
 
 ```bash
+# 1. Install dependencies
 npm install
-npm run dev                 # widget works at http://localhost:3000
+
+# 2. Run local dev server
+npm run dev
 ```
 
-Add an LLM key for real answers. **Default: NVIDIA OpenAI OSS 120B** (free at [build.nvidia.com](https://build.nvidia.com)):
+Open `http://localhost:3000` to preview the chatbot widget embedded on a sample portfolio page or test the `/embed` route directly at `http://localhost:3000/embed`.
 
-```bash
-# .env.local
+### Adding an LLM Key (Free API)
+By default, the chatbot runs in retrieval-demo mode without a key. To get real AI streaming answers, add an API key to `.env.local`:
+
+```env
+# Free key at https://build.nvidia.com
 NVIDIA_API_KEY=nvapi_xxx
 ```
 
-Other supported providers (fallback): Groq, OpenRouter, OpenAI, any OpenAI-compatible endpoint.
+*Supported provider keys (in fallback order):* `NVIDIA_API_KEY` → `GROQ_API_KEY` → `OPENROUTER_API_KEY` → `OPENAI_API_KEY`.
 
-## Embedding in your existing portfolio
+---
 
-Add one line at the end of your root layout or page:
+## 🌐 Deploying to Render (Step-by-Step)
+
+You can deploy this Next.js app to Render as a **Web Service** in less than 5 minutes.
+
+### Method 1: Using Render Blueprint (`render.yaml` - Recommended)
+
+1. Push this repository to GitHub.
+2. Go to your [Render Dashboard](https://dashboard.render.com/) and click **New +** → **Blueprint**.
+3. Select your repository `RanitaDey789/chat_me`. Render will automatically detect `render.yaml`.
+4. In the environment variables section, set your LLM API Key:
+   - `NVIDIA_API_KEY` (or `GROQ_API_KEY` / `OPENAI_API_KEY`)
+5. Click **Apply**. Render will build and deploy your app.
+
+### Method 2: Manual Render Web Service Setup
+
+1. On [Render Dashboard](https://dashboard.render.com/), click **New +** → **Web Service**.
+2. Connect your GitHub repository.
+3. Configure the following settings:
+   - **Name**: `portfolio-rag-chatbot` (or your choice)
+   - **Language**: `Node`
+   - **Branch**: `main`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm run start`
+   - **Instance Type**: `Free`
+4. Add **Environment Variables**:
+   - `NODE_VERSION`: `20.11.0`
+   - `NVIDIA_API_KEY`: your API key (from build.nvidia.com or Groq)
+5. Click **Create Web Service**.
+
+Once deployed, Render will provide a live URL, e.g.:
+`https://portfolio-rag-chatbot.onrender.com`
+
+---
+
+## 📌 Embedding the Chatbot into your Vercel Portfolio (`ranitadey.vercel.app`)
+
+Since your portfolio is already live on Vercel at `https://ranitadey.vercel.app/`, you have two quick ways to add the chatbot:
+
+### Option A: Clean Floating Iframe / Modal Widget (Works for ANY site — HTML, React, Vue, Next.js)
+
+Add this lightweight floating button & iframe modal script to your portfolio page (or layout) on Vercel:
+
+```html
+<!-- Add before closing </body> tag on ranitadey.vercel.app -->
+<style>
+  #chat-widget-button {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #7c5cff, #4ecdc4);
+    color: white; border: none; cursor: pointer;
+    box-shadow: 0 10px 25px rgba(124, 92, 255, 0.4);
+    font-size: 24px; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s ease;
+  }
+  #chat-widget-button:hover { transform: scale(1.08); }
+  #chat-widget-modal {
+    display: none; position: fixed; bottom: 90px; right: 24px; z-index: 9999;
+    width: min(420px, calc(100vw - 32px)); height: min(650px, 70vh);
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 1px solid #26263a;
+  }
+</style>
+
+<button id="chat-widget-button" onclick="toggleChatWidget()" aria-label="Open Chat Assistant">💬</button>
+<div id="chat-widget-modal">
+  <iframe
+    src="https://portfolio-rag-chatbot.onrender.com/embed"
+    style="width: 100%; height: 100%; border: none;"
+    title="AI Portfolio Assistant"
+  ></iframe>
+</div>
+
+<script>
+  function toggleChatWidget() {
+    const modal = document.getElementById('chat-widget-modal');
+    modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+  }
+</script>
+```
+
+### Option B: If your Vercel Portfolio is a React / Next.js app
+
+If your portfolio repository is built with React or Next.js, you can import `<ChatWidget />` directly and pass your Render API URL as `apiBase`:
 
 ```tsx
-import { ChatWidget } from "@/components/ChatWidget";
+import { ChatWidget } from "./components/ChatWidget";
 
-export default function Layout({ children }) {
+export default function PortfolioPage() {
   return (
     <>
-      {children}
-      <ChatWidget ownerName="Your Name" />
+      {/* Your existing portfolio content */}
+      <ChatWidget
+        ownerName="Ranita Dey"
+        apiBase="https://portfolio-rag-chatbot.onrender.com"
+      />
     </>
   );
 }
 ```
 
-See [INTEGRATION.md](./INTEGRATION.md) for the full guide.
+---
 
-## Architecture highlights
+## 📂 Customizing Your Knowledge Base
 
-- **Local embeddings** — BAAI/bge-small-en-v1.5 runs via ONNX. Zero cost, zero API calls.
-- **In-memory vector store** — for a portfolio-sized corpus (<500 chunks), brute-force cosine similarity is faster than a managed vector DB.
-- **Provider-agnostic LLM** — OpenAI-compatible API. Defaults to free tiers (Groq → OpenRouter → OpenAI).
-- **Streaming SSE** — first token arrives in ~400ms.
-- **Grounded refusal** — the bot never fabricates facts not present in your knowledge base.
-- **Source citations** — every answer shows which documents it retrieved, with scores.
+The chatbot grounds all answers in markdown files under `src/knowledge/`. Edit these files to personalize the chatbot with your authentic information:
 
-## Cost
+- `src/knowledge/about.md` — Bio, summary, background
+- `src/knowledge/skills.md` — Tech stack, frameworks, tools
+- `src/knowledge/projects/` — Detailed notes on your projects
+- `src/knowledge/internships.md` — Work history & contributions
+- `src/knowledge/education.md` & `certifications.md` — Degree, courses, certificates
+- `src/knowledge/faq.md` — Frequently asked questions
 
-| Component | Monthly cost (1000 conversations) |
-|---|---|
-| Netlify hosting | $0 |
-| Embeddings (local BGE) | $0 |
-| Vector DB (in-memory) | $0 |
-| LLM (Groq free tier) | $0 |
-| **Total** | **$0** |
+When you push updates to `src/knowledge/`, Render will automatically rebuild the embeddings during `npm run build`.
 
-## License
+---
 
-MIT — use it however you want.
+## 🛠️ Project Structure
+
+```
+├── render.yaml                   ← Render Blueprint configuration
+├── .node-version                 ← Pin Node version to 20.11.0 for Render
+├── scripts/
+│   └── build-embeddings.ts       ← Generates vector embeddings at build time
+├── src/
+│   ├── app/
+│   │   ├── embed/page.tsx        ← Full-screen iframe endpoint (/embed)
+│   │   └── api/
+│   │       ├── chat/route.ts     ← Streaming RAG endpoint with CORS support
+│   │       ├── health/route.ts   ← Warmup & health check endpoint
+│   │       └── knowledge/route.ts← Knowledge base index stats
+│   ├── components/
+│   │   └── ChatWidget.tsx        ← Drop-in floating widget & ChatWindow
+│   ├── lib/
+│   │   ├── embeddings.ts         ← Local BGE ONNX embeddings (no external costs)
+│   │   ├── vector-store.ts       ← Fast in-memory cosine similarity search
+│   │   ├── llm.ts                ← Provider-agnostic streaming LLM client
+│   │   └── knowledge.ts          ← Markdown parser & semantic chunker
+│   └── knowledge/                ← Knowledge base markdown files
+```
+
+---
+
+## 📜 License
+
+MIT — feel free to use and adapt for your portfolio!

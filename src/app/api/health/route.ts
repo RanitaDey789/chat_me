@@ -10,6 +10,17 @@ import { warmUp } from "@/lib/vector-store";
 
 export const runtime = "nodejs";
 
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
 export async function POST() {
   try {
     const result = await warmUp();
