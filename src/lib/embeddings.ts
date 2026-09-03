@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
-const EMBEDDING_MODEL = "nvidia/nv-embedqa-e5-v5";
+const EMBEDDING_MODEL = "llama-nemotron-embed-vl-1b-v2";
 
 interface EmbedOptions {
   inputType?: "query" | "passage";
