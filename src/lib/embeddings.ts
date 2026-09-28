@@ -113,30 +113,39 @@ export async function embed(texts: string[], options: EmbedOptions = {}): Promis
   // 1. NVIDIA NIM primary embedding
   if (process.env.NVIDIA_API_KEY) {
     const apiKey = process.env.NVIDIA_API_KEY;
-    const model = normalizeNvidiaModel(process.env.NVIDIA_EMBEDDING_MODEL);
+    const preferredModel = normalizeNvidiaModel(process.env.NVIDIA_EMBEDDING_MODEL);
+    const candidateModels = Array.from(
+      new Set([preferredModel, "nvidia/llama-nemotron-embed-vl-1b-v2", "nvidia/llama-3.2-nv-embedqa-1b-v2", "baai/bge-m3"])
+    );
 
     const client = new OpenAI({
       apiKey,
       baseURL: NVIDIA_BASE_URL,
     });
 
-    try {
-      const response = await client.embeddings.create({
-        model,
-        input: texts,
-        // @ts-expect-error - input_type and truncate are NVIDIA NIM-specific fields
-        input_type: inputType,
-        truncate: "END",
-      });
+    let lastErr: unknown = null;
+    for (const model of candidateModels) {
+      try {
+        const response = await client.embeddings.create({
+          model,
+          input: texts,
+          // @ts-expect-error - input_type and truncate are NVIDIA NIM-specific fields
+          input_type: inputType,
+          truncate: "END",
+        });
 
-      return response.data.map((item) => item.embedding);
-    } catch (err) {
-      if (options.allowFallback) {
-        console.warn(`[embeddings] NVIDIA API call failed (${err instanceof Error ? err.message : err}), using fallback vectors.`);
-        return texts.map((t) => generateFallbackVector(t, DEFAULT_EMBEDDING_DIMENSIONS));
+        return response.data.map((item) => item.embedding);
+      } catch (err) {
+        lastErr = err;
+        console.warn(`[embeddings] Model ${model} returned error (${err instanceof Error ? err.message : err}). Trying next candidate...`);
       }
-      throw err;
     }
+
+    if (options.allowFallback) {
+      console.warn(`[embeddings] All NVIDIA embedding candidates failed (${lastErr instanceof Error ? lastErr.message : lastErr}), using fallback vectors.`);
+      return texts.map((t) => generateFallbackVector(t, DEFAULT_EMBEDDING_DIMENSIONS));
+    }
+    throw lastErr;
   }
 
   // 2. OpenAI fallback

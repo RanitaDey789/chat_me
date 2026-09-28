@@ -1,74 +1,98 @@
 /**
- * LLM provider abstraction.
+ * LLM provider abstraction with resilient multi-model and multi-provider fallback.
  *
- * All providers speak the OpenAI-compatible chat-completion API, so we can
- * swap between them with just env vars.
+ * All providers speak the OpenAI-compatible chat-completion API.
  *
  * Provider selection order:
- *  1. NVIDIA_API_KEY (primary — OpenAI OSS 120B, excellent reasoning)
- *  2. OPENAI_BASE_URL + OPENAI_API_KEY (explicit override for any provider)
- *  3. GROQ_API_KEY (fallback — fast, free)
- *  4. OPENROUTER_API_KEY (fallback — many free models)
- *  5. OPENAI_API_KEY (paid fallback)
+ *  1. NVIDIA NIM (meta/llama-3.3-70b-instruct — fast, high reasoning, widely available)
+ *  2. Explicit override (OPENAI_BASE_URL + OPENAI_API_KEY)
+ *  3. Groq (llama-3.3-70b-versatile — fast, generous free tier)
+ *  4. OpenRouter (many free models)
+ *  5. OpenAI (gpt-4o-mini)
  *  6. Demo mode (no key) — returns a helpful setup message
  */
 
 import OpenAI from "openai";
 
-interface ProviderConfig {
+export interface ProviderConfig {
   name: string;
   baseURL: string;
   apiKey: string;
-  model: string;
+  models: string[];
 }
 
-function detectProvider(): ProviderConfig | null {
-  // 1. NVIDIA — primary provider (OpenAI OSS 120B)
+const DEFAULT_NVIDIA_CHAT_MODELS = [
+  "meta/llama-3.3-70b-instruct",
+  "meta/llama-3.1-70b-instruct",
+  "mistralai/mistral-7b-instruct-v0.3",
+  "nvidia/llama-3.1-nemotron-70b-instruct",
+];
+
+function getAvailableProviders(): ProviderConfig[] {
+  const list: ProviderConfig[] = [];
+
+  // 1. NVIDIA NIM
   if (process.env.NVIDIA_API_KEY) {
-    return {
+    const configured = process.env.NVIDIA_MODEL?.trim();
+    const models = configured
+      ? [configured, ...DEFAULT_NVIDIA_CHAT_MODELS.filter((m) => m !== configured)]
+      : DEFAULT_NVIDIA_CHAT_MODELS;
+
+    list.push({
       name: "nvidia",
       baseURL: "https://integrate.api.nvidia.com/v1",
       apiKey: process.env.NVIDIA_API_KEY,
-      model: process.env.NVIDIA_MODEL || "openai/gpt-oss-120b",
-    };
+      models,
+    });
   }
-  // 2. Explicit override for any OpenAI-compatible endpoint
+
+  // 2. Custom OpenAI-compatible endpoint
   if (process.env.OPENAI_BASE_URL && process.env.OPENAI_API_KEY) {
-    return {
+    list.push({
       name: "custom",
       baseURL: process.env.OPENAI_BASE_URL,
       apiKey: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    };
+      models: [process.env.OPENAI_MODEL || "gpt-4o-mini"],
+    });
   }
-  // 3. Groq (fast, generous free tier)
+
+  // 3. Groq
   if (process.env.GROQ_API_KEY) {
-    return {
+    list.push({
       name: "groq",
       baseURL: "https://api.groq.com/openai/v1",
       apiKey: process.env.GROQ_API_KEY,
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-    };
+      models: [
+        process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+      ],
+    });
   }
+
   // 4. OpenRouter
   if (process.env.OPENROUTER_API_KEY) {
-    return {
+    list.push({
       name: "openrouter",
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: process.env.OPENROUTER_API_KEY,
-      model: process.env.OPENROUTER_MODEL || "qwen/qwen-2.5-7b-instruct:free",
-    };
+      models: [
+        process.env.OPENROUTER_MODEL || "qwen/qwen-2.5-7b-instruct:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+      ],
+    });
   }
+
   // 5. OpenAI
   if (process.env.OPENAI_API_KEY) {
-    return {
+    list.push({
       name: "openai",
       baseURL: "https://api.openai.com/v1",
       apiKey: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    };
+      models: [process.env.OPENAI_MODEL || "gpt-4o-mini"],
+    });
   }
-  return null;
+
+  return list;
 }
 
 export interface ChatMessage {
@@ -77,45 +101,85 @@ export interface ChatMessage {
 }
 
 export async function* streamChat(messages: ChatMessage[]): AsyncGenerator<string, void, unknown> {
-  const provider = detectProvider();
+  const providers = getAvailableProviders();
 
-  if (!provider) {
+  if (providers.length === 0) {
     yield "**Demo mode — no LLM API key configured.**\n\n";
-    yield "To activate the chatbot, add `NVIDIA_API_KEY` to your `.env`.\n\n";
-    yield "Other supported providers: `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, ";
-    yield "or any OpenAI-compatible endpoint via `OPENAI_BASE_URL` + `OPENAI_API_KEY`.\n\n";
-    yield "Retrieval is working — the context below is what would be sent to the LLM:\n\n";
-    yield "```\n" + (messages[messages.length - 1]?.content.slice(0, 600) || "") + "\n```";
+    yield "To activate streaming AI answers, set an API key in your environment variables:\n\n";
+    yield "- **NVIDIA NIM** (free): `NVIDIA_API_KEY` (from [build.nvidia.com](https://build.nvidia.com/))\n";
+    yield "- **Groq** (free & ultra-fast): `GROQ_API_KEY` (from [console.groq.com](https://console.groq.com/))\n";
+    yield "- **OpenRouter** or **OpenAI**: `OPENROUTER_API_KEY` or `OPENAI_API_KEY`\n\n";
+    yield "Retrieval is functioning — below is the grounded context retrieved for your query:\n\n";
+    yield "```markdown\n" + (messages[messages.length - 1]?.content.slice(0, 700) || "") + "\n```";
     return;
   }
 
-  const client = new OpenAI({
-    apiKey: provider.apiKey,
-    baseURL: provider.baseURL,
-  });
+  const errors: { provider: string; model: string; error: string }[] = [];
 
-  const stream = await client.chat.completions.create({
-    model: provider.model,
-    messages,
-    stream: true,
-    temperature: 0.3, // low — faithful, grounded answers
-    max_tokens: 1024,
-    // For NVIDIA gpt-oss-120b (and other reasoning models), the API may
-    // return a `reasoning_content` field. We only stream the final answer.
-  });
+  for (const provider of providers) {
+    const client = new OpenAI({
+      apiKey: provider.apiKey,
+      baseURL: provider.baseURL,
+    });
 
-  for await (const chunk of stream) {
-    // `reasoning_content` (if present) is internal chain-of-thought; we
-    // intentionally ignore it so recruiters only see the clean final answer.
-    const delta = chunk.choices[0]?.delta as
-      | { content?: string; reasoning_content?: string }
-      | undefined;
-    const content = delta?.content;
-    if (content) yield content;
+    for (const model of provider.models) {
+      try {
+        const stream = await client.chat.completions.create({
+          model,
+          messages,
+          stream: true,
+          temperature: 0.3,
+          max_tokens: 1024,
+        });
+
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta as
+            | { content?: string; reasoning_content?: string }
+            | undefined;
+          const content = delta?.content;
+          if (content) yield content;
+        }
+
+        // Successfully completed streaming with this model
+        return;
+      } catch (err: unknown) {
+        const status = (err as { status?: number })?.status;
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[llm] Provider ${provider.name} model ${model} failed (${status || msg}). Trying next candidate...`);
+        errors.push({ provider: provider.name, model, error: `[HTTP ${status || "err"}] ${msg}` });
+
+        // If it's a 410 (Gone) or 404 (Not Found), immediately try the next model
+        continue;
+      }
+    }
   }
+
+  // If all providers and models failed
+  console.error("[llm] All providers and model candidates failed:", errors);
+  const primaryError = errors[0];
+
+  yield "⚠️ **The AI service encountered an issue with the configured model.**\n\n";
+  if (primaryError?.error.includes("410")) {
+    yield `The model endpoint returned HTTP **410 (Gone)**. This occurs when NVIDIA deprecates a model (such as older gpt-oss endpoints) or when your NVIDIA Build key needs updated model routing.\n\n`;
+    yield `**Easy Fixes:**\n`;
+    yield `1. In your Render / host environment variables, set:\n`;
+    yield `   \`NVIDIA_MODEL=meta/llama-3.3-70b-instruct\`\n`;
+    yield `2. Or add a free **Groq** key:\n`;
+    yield `   \`GROQ_API_KEY=gsk_...\` (from [console.groq.com](https://console.groq.com)) for instant, high-speed responses.\n\n`;
+  } else {
+    yield `Error details: \`${primaryError?.error || "Unknown error"}\`\n\n`;
+    yield `Please verify your API key in your hosting dashboard.\n\n`;
+  }
+
+  yield "---\n\n**Retrieved Context from Knowledge Base:**\n\n";
+  yield "```markdown\n" + (messages[messages.length - 1]?.content.slice(0, 600) || "") + "\n```";
 }
 
 export function getProviderInfo(): { name: string; model: string } | null {
-  const p = detectProvider();
-  return p ? { name: p.name, model: p.model } : null;
+  const providers = getAvailableProviders();
+  if (providers.length === 0) return null;
+  return {
+    name: providers[0].name,
+    model: providers[0].models[0],
+  };
 }
