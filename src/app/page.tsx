@@ -33,7 +33,7 @@ export default function PortfolioPage() {
           Building <span className="gradient-text">production-grade</span> AI systems.
         </h1>
         <p className="text-lg text-[var(--color-text-dim)] max-w-2xl leading-relaxed mb-8">
-          I'm a senior engineer focused on LLM infrastructure, RAG systems, and applied ML.
+          I&apos;m a senior engineer focused on LLM infrastructure, RAG systems, and applied ML.
           I ship things that work in production, not just in notebooks.
         </p>
         <div className="flex items-center gap-3 mb-12">
@@ -59,8 +59,8 @@ export default function PortfolioPage() {
           </div>
           <p className="text-sm text-[var(--color-text-dim)] leading-relaxed">
             Click the chat icon in the bottom-right corner to ask questions about my work,
-            projects, and engineering decisions. It's powered by a local RAG pipeline over
-            my portfolio knowledge base — no external search, fully grounded responses.
+            projects, and engineering decisions. It&apos;s powered by a RAG pipeline over
+            my portfolio knowledge base — grounded in authentic work.
           </p>
         </div>
       </section>
@@ -69,7 +69,7 @@ export default function PortfolioPage() {
         <h2 className="text-2xl font-semibold text-white mb-6">Selected Projects</h2>
         <div className="grid md:grid-cols-2 gap-4">
           {[
-            { title: "Personal RAG Chatbot", desc: "This assistant — built with local BGE embeddings, in-memory vector search, and a provider-agnostic LLM layer." },
+            { title: "Personal RAG Chatbot", desc: "This assistant — built with NVIDIA NIM embeddings, in-memory vector search, and a provider-agnostic streaming LLM layer." },
             { title: "Real-Time Defect Detection", desc: "YOLOv8 on edge devices. 94.2% mAP at 38ms/frame on a Jetson Nano." },
             { title: "Two-Tower Recommender", desc: "Serving personalized results to 200K DAU at p95 < 80ms." },
             { title: "Research on Efficient Fine-Tuning", desc: "Second-author paper at ACL workshop on low-rank prompt tuning." },

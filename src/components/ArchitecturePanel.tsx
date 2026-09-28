@@ -41,7 +41,7 @@ export function ArchitecturePanel() {
           icon={<FileText className="h-3.5 w-3.5" />}
           num="1"
           title="Query"
-          desc="Your question → embedded locally via BGE-small"
+          desc="Your question → embedded via NVIDIA NIM (llama-nemotron-embed-vl-1b-v2)"
         />
         <PipelineStep
           icon={<Database className="h-3.5 w-3.5" />}
@@ -75,8 +75,15 @@ export function ArchitecturePanel() {
           <dl className="space-y-2 text-sm">
             <Row label="Chunks indexed" value={stats.chunks.toString()} />
             <Row label="Documents" value={stats.sources.length.toString()} />
-            <Row label="Embedding model" value="BGE-small-en (384d)" mono />
-            <Row label="Embedding runtime" value="Local (ONNX)" />
+            <Row
+              label="Embedding model"
+              value={`${stats.embeddingModel} (${stats.embeddingDimensions}d)`}
+              mono
+            />
+            <Row
+              label="Embedding runtime"
+              value={stats.embeddingModel.includes("nvidia") ? "NVIDIA NIM Cloud" : "In-Memory Vector Search"}
+            />
             <Row label="LLM provider" value={stats.provider.name} />
             <Row label="LLM model" value={stats.provider.model} mono />
           </dl>
@@ -112,8 +119,8 @@ export function ArchitecturePanel() {
           <li className="flex gap-2">
             <span className="text-[var(--color-accent-2)]">→</span>
             <span>
-              <strong className="text-white">Zero-cost embeddings</strong> — BGE-small runs locally
-              via ONNX, no API calls.
+              <strong className="text-white">High-dimensional embeddings</strong> — Powered by NVIDIA NIM
+              (llama-nemotron-embed-vl-1b-v2) with hybrid lexical search.
             </span>
           </li>
           <li className="flex gap-2">

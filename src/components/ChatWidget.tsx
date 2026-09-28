@@ -68,14 +68,15 @@ export function ChatWidget({ ownerName = "Ranita Dey", apiBase = "" }: ChatWidge
     if (!open) setUnread((n) => n + 1);
   }, [open]);
 
-  useEffect(() => {
-    if (open) setUnread(0);
-  }, [open]);
+  const handleOpen = () => {
+    setOpen(true);
+    setUnread(0);
+  };
 
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         aria-label="Open chat"
         className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-2xl shadow-[#7c5cff]/30 bg-gradient-to-br from-[#7c5cff] to-[#4ecdc4] hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
       >
@@ -291,9 +292,9 @@ function WelcomeScreen({ ownerName, onSelect }: { ownerName: string; onSelect: (
         <Sparkles className="h-6 w-6 text-white" />
       </div>
       <div>
-        <h3 className="text-base font-semibold text-white mb-1">Hi, I'm {ownerName}'s AI assistant</h3>
+        <h3 className="text-base font-semibold text-white mb-1">Hi, I&apos;m {ownerName}&apos;s AI assistant</h3>
         <p className="text-xs text-[var(--color-text-dim)] max-w-xs leading-relaxed">
-          I've read {ownerName}'s portfolio, projects, and engineering notes. Ask me anything.
+          I&apos;ve read {ownerName}&apos;s portfolio, projects, and engineering notes. Ask me anything.
         </p>
       </div>
       <div className="w-full space-y-1.5 mt-2">
@@ -493,7 +494,7 @@ function WarmupScreen({ ownerName }: { ownerName: string }) {
 
       <div>
         <h3 className="text-base font-semibold text-white mb-1">
-          Loading {ownerName}'s AI assistant
+          Loading {ownerName}&apos;s AI assistant
         </h3>
         <p className="text-xs text-[var(--color-text-dim)] max-w-[280px] leading-relaxed">
           Downloading the language model for the first time. This only happens once — future
@@ -520,7 +521,7 @@ function WarmupScreen({ ownerName }: { ownerName: string }) {
           How it works
         </div>
         <p className="text-[11px] text-[var(--color-text-dim)] leading-relaxed">
-          This chatbot reads {ownerName}'s portfolio notes, embeds them into a local vector
+          This chatbot reads {ownerName}&apos;s portfolio notes, embeds them into a local vector
           index, and uses a 120B-parameter LLM to answer your questions — all grounded in
           real data, never fabricated.
         </p>

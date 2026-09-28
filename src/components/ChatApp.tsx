@@ -169,7 +169,7 @@ export function ChatApp() {
                 <span className="gradient-text">Ask me anything</span>
               </h1>
               <p className="text-[var(--color-text-dim)] max-w-md mx-auto">
-                I'm an AI assistant trained on my portfolio, projects, and engineering decisions.
+                I&apos;m an AI assistant trained on my portfolio, projects, and engineering decisions.
                 Try a question below.
               </p>
             </div>

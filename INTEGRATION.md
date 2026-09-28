@@ -12,7 +12,7 @@ This guide walks you through integrating your newly deployed Render RAG Chatbot 
 │  https://ranitadey.vercel.app        │ ───► │  https://portfolio-rag-chatbot.     │
 │                                      │       │          onrender.com                │
 │  - Hosts UI & portfolio content      │       │  - Hosts /embed route & /api/chat    │
-│  - Embeds Chatbot via Iframe/Widget  │       │  - BGE ONNX Embeddings + Vector Store│
+│  - Embeds Chatbot via Iframe/Widget  │       │  - NVIDIA NIM Embeddings + Vector Store│
 └──────────────────────────────────────┘       └──────────────────────────────────────┘
 ```
 

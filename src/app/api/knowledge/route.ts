@@ -8,6 +8,7 @@
 import { getVectorStore } from "@/lib/vector-store";
 import { loadKnowledgeBase } from "@/lib/knowledge";
 import { getProviderInfo } from "@/lib/llm";
+import { getEmbeddingModelInfo } from "@/lib/embeddings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const [store, chunks] = await Promise.all([getVectorStore(), loadKnowledgeBase()]);
   const provider = getProviderInfo();
+  const embedInfo = getEmbeddingModelInfo();
+  const storeInfo = store.getModelInfo();
 
   const byCategory = chunks.reduce<Record<string, number>>((acc, c) => {
     acc[c.category] = (acc[c.category] || 0) + 1;
@@ -28,7 +31,8 @@ export async function GET() {
     sources,
     byCategory,
     provider: provider || { name: "demo", model: "none" },
-    embeddingModel: "BAAI/bge-small-en-v1.5",
-    embeddingDimensions: 384,
+    embeddingModel: embedInfo.provider !== "fallback" ? embedInfo.model : storeInfo.model,
+    embeddingDimensions: storeInfo.dimensions || embedInfo.dimensions,
+    embeddingProvider: embedInfo.provider,
   });
 }
